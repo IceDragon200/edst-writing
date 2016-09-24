@@ -1,0 +1,20 @@
+#
+# Earthen/Smiths/book.edst
+#   Book head data
+~BOOK2:INFO
+%%book
+{
+  %id edst/test_book
+  %title Test Book
+  %author IceDragon (Corey Powell)
+  %length 1
+  %%note
+  {
+    ..
+  }
+  %arcs 1
+  %%description
+  {
+
+  }
+}

@@ -1,0 +1,40 @@
+module EDST
+  module Catalogue
+    class Chapter
+      include DocumentCommon
+
+      attr_reader :document
+      attr_reader :filename
+      attr_reader :book
+      attr_reader :cluster
+      attr_reader :number
+      attr_accessor :data
+
+      def initialize(book:, document:, cluster:, extern:, filename: nil)
+        @extern = extern
+        @book = book
+        @document = document
+        @filename = filename || @document.filename || @book.filename
+        @cluster = cluster
+        initialize_document
+        @number = find_head_node('chapter').value.to_i
+      end
+
+      def book_pathname(*args)
+        book.book_pathname(*args)
+      end
+
+      def cluster_id
+        cluster.id
+      end
+
+      def book_id
+        book.id
+      end
+
+      def index
+        number
+      end
+    end
+  end
+end

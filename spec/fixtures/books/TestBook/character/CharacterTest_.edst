@@ -1,0 +1,11 @@
+~CHARACTER:PROFILE
+%%character
+{
+  %name Test _ Character
+  %alias EDSTTest
+  %age 3
+  %gender Genderless
+  %%relation
+  {
+  }
+}

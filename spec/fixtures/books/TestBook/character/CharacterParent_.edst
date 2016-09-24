@@ -1,0 +1,12 @@
+~CHARACTER:PROFILE
+%%character
+{
+  %name Parent _ Character
+  %alias EDSTTest
+  %age 40
+  %gender Male
+  %%relation
+  {
+    --- Father of Child Character
+  }
+}

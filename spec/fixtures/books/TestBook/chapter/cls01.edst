@@ -1,0 +1,7 @@
+%%cluster
+{
+  %id edst/test_book/cluster/1
+  %title Test Cluster
+  %index 1
+  %chapters 1
+}
