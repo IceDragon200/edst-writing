@@ -54,12 +54,13 @@ module EDST
         @characters_by_alternate_uuid.clear
       end
 
-      def load_book(book_filename)
+      def load_book(book_filename, **options)
         puts "Loading Book '#{book_filename}'"
+        book_registry = Registry.new @books
         begin
-          book = Catalogue::Book.load_file(book_filename)
+          book = Catalogue::Book.load_file(book_filename, **options)
           puts "Loaded Book '#{book_filename}'"
-          @books[book.id] = book
+          book_registry[book.id] = book
         rescue Catalogue::BookError => ex
           puts ex.inspect
         end

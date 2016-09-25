@@ -17,8 +17,7 @@ module EDST
       library = EDST::Catalogue::Library.new
       book_glob = File.expand_path("**/book.edst", rootpath)
       Dir.glob(book_glob) do |book_filename|
-        book = library.load_book(book_filename)
-        book&.load_everything unless lazy_load
+        library.load_book(book_filename, lazy_load: lazy_load)
       end
       library.load_characters
       library

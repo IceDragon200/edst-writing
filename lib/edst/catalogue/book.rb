@@ -134,13 +134,15 @@ module EDST
         self
       end
 
-      def self.load_file(filename)
+      def self.load_file(filename, lazy_load: true)
         document = EDST::Document.load_file File.expand_path(filename), debug: true
         book_node = document.search('div.book').first
         if book_node
-          Catalogue::Book.new(
+          book = Catalogue::Book.new(
             filename: filename,
             document: book_node).tap(&:relation_tree)
+          book.load_everything unless lazy_load
+          book
         else
           raise BookError, "'#{filename}' did not contain a valid div.book"
         end
