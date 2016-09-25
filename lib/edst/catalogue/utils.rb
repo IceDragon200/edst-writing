@@ -21,6 +21,11 @@ module EDST
         end
       end
 
+      # @return [String]
+      def self.node_to_label_id(node)
+        "label-#{node.value.downcase.gsub(/\s+/, '-')}"
+      end
+
       # A shortcut for searching the ast and returning the result as an Array
       def self.lookup(node, thing)
         node.search(thing).to_a
