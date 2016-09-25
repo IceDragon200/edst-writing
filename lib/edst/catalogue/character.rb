@@ -88,6 +88,10 @@ module EDST
         wiki_basename
       end
 
+      def book_base_id
+        [book_id, base_id].join('/')
+      end
+
       # Joins the character id with the book
       # @example
       #    full_id #=> "book/characters/character-base-id"
