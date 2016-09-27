@@ -1,4 +1,5 @@
 require 'edst/catalogue/utils'
+require 'edst/catalogue/names'
 
 module EDST
   module Catalogue
@@ -19,16 +20,8 @@ module EDST
       end
 
       def find_by_name(name, check_aliases: true)
-        o = Utils.parse_character_name(name)
         @data.find do |character|
-          o.each_pair.all? do |(key, value)|
-            if key == :middle_names
-              (character.middle_names & value) == value
-            else
-              character.send(key) == value ||
-                ((check_aliases && key == :first_name) ? character.aliases.include?(value) : false)
-            end
-          end
+          Catalogue::Names.equal?(character.names, name, check_aliases: check_aliases)
         end
       end
 

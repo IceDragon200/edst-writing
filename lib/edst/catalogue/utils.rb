@@ -1,3 +1,5 @@
+require 'edst/catalogue/names'
+
 module EDST
   module Catalogue
     module Utils
@@ -21,6 +23,36 @@ module EDST
         end
       end
 
+      def self.node_to_text(node)
+        result = []
+        node.each_child do |child|
+          case child.kind
+          when :p
+            result << child.value
+          else
+            warn "Cannot convert child node #{child.kind} to text"
+          end
+        end
+        result.join("\n")
+      end
+
+      def self.node_to_data(node)
+        case node.kind
+        when :div
+          result = []
+          node.each_child do |child|
+            result << node_to_data(child)
+          end
+          [:list, result]
+        when :tag
+          [:tuple, [node.key, node.value]]
+        when :p
+          [:value, node.value]
+        else
+          nil
+        end
+      end
+
       # @return [String]
       def self.node_to_label_id(node)
         "label-#{node.value.downcase.gsub(/\s+/, '-')}"
@@ -36,20 +68,7 @@ module EDST
       end
 
       def self.parse_character_name(name)
-        names = OpenStruct.new
-        wrds = name.split(/\s+/)
-        if wrds.size >= 3
-          fn = wrds.first
-          md = wrds.slice(1, wrds.size - 2)
-          ln = wrds.last
-          names.first_name, names.middle_names, names.last_name = fn, md, ln
-          names.middle_name = md.first
-        elsif wrds.size == 2
-          names.first_name, names.last_name = *wrds
-        elsif wrds.size == 1
-          names.first_name = wrds.first
-        end
-        names
+        Catalogue::Names.parse(name)
       end
 
       # Parses relation items, usually in the form of `A of B`, where A is the
@@ -63,9 +82,8 @@ module EDST
           rel = $1
           person = $2
           return rel, person
-        else
-          nil
         end
+        return nil, nil
       end
 
       def self.write_edst_node_to_text(tracking, file, node)

@@ -47,6 +47,10 @@ module EDST
         @character.name
       end
 
+      def display_name
+        @character.display_name
+      end
+
       private def add_group(name)
         #result = Set.new
         result = []

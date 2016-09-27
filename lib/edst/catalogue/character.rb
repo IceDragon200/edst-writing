@@ -1,4 +1,5 @@
 require 'edst/catalogue/utils'
+require 'edst/catalogue/character_relation'
 
 module EDST
   module Catalogue
@@ -25,6 +26,7 @@ module EDST
         []
       end
 
+      # @return [Array<CharacterRelation>]
       def relations
         @relations ||= raw_relations.map do |str|
           rel, person = Utils.parse_character_relation(str)
@@ -32,40 +34,67 @@ module EDST
         end
       end
 
+      def find_relation_by_name(name)
+        @relations.find do |relation|
+          Catalogue::Names.equal?(relation.target_name, name)
+        end
+      end
+
       def filename
         @document.filename
       end
 
-      def name
-        character_data.name
+      def has_attribute?(name)
+        respond_to?(name) || character_data[name] != nil
       end
 
-      def full_name
-        character_data.name
+      def get(name)
+        respond_to?(name) ? send(name) : character_data[name]
       end
-
-      def aliases
-        character_data.aliases
-      end
+      alias :[] :get
 
       def gender
         character_data.gender
       end
 
+      # Returns the raw character name, this may contain nicknames, placeholders and other illegal characters
+      # Use display_name instead if you wish to show the name
+      def name
+        character_data.name
+      end
+
+      def names
+        @names ||= Catalogue::Names.parse(character_data.name).tap do |n|
+          n.aliases = character_data.aliases
+        end
+      end
+
+      def first_and_family_name
+        names.first_and_family_name
+      end
+
+      def display_name
+        names.to_s
+      end
+
+      def aliases
+        names.aliases
+      end
+
       def first_name
-        character_data.first_name
+        names.first_name
       end
 
       def middle_name
-        character_data.middle_name
+        names.middle_name
       end
 
       def middle_names
-        character_data.middle_names
+        names.middle_names
       end
 
       def last_name
-        character_data.last_name
+        names.last_name
       end
 
       # A basic identifier for the character, spaces are replaced with - and the name is lower cased
@@ -79,8 +108,8 @@ module EDST
       end
 
       # This is the UUID used to identify the same character across different worlds, ages etc
-      def alternate_uuid
-        character_data.alternate_uuid
+      def sinuuid
+        character_data.sinuuid
       end
 
       # The character's base id, used for identifying them in urls

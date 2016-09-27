@@ -36,14 +36,14 @@ module EDST
       # A hash mapping the character's uuid to the character
       attr_reader :character_by_uuid
       # A hash mapping a character's alternate uuid to all instances of their character
-      attr_reader :characters_by_alternate_uuid
+      attr_reader :characters_by_sinuuid
 
       def initialize
         @books = {}
         @characters = []
         @character_by_full_id = {}
         @character_by_uuid = {}
-        @characters_by_alternate_uuid = {}
+        @characters_by_sinuuid = {}
       end
 
       def clear
@@ -51,7 +51,11 @@ module EDST
         @characters.clear
         @character_by_full_id.clear
         @character_by_uuid.clear
-        @characters_by_alternate_uuid.clear
+        @characters_by_sinuuid.clear
+      end
+
+      def find_book(book_id)
+        @books.fetch(book_id)
       end
 
       def load_book(book_filename, **options)
@@ -73,7 +77,7 @@ module EDST
         end
         char_by_full_id = Registry.new @character_by_full_id
         char_by_uuid = Registry.new @character_by_uuid
-        chars_by_alternate_uuid = Registry.new @characters_by_alternate_uuid
+        chars_by_sinuuid = Registry.new @characters_by_sinuuid
         puts "Mapping characters to id maps"
         @characters.each do |character|
           char_by_full_id[character.full_id] = character
@@ -82,10 +86,10 @@ module EDST
           else
             warn "#{character.full_id} has no UUID".light_yellow
           end
-          if character.alternate_uuid
-            (chars_by_alternate_uuid[character.alternate_uuid] ||= []).push(character)
+          if character.sinuuid
+            (chars_by_sinuuid[character.sinuuid] ||= []).push(character)
           else
-            warn "#{character.full_id} has no Alternate UUID".light_yellow
+            warn "#{character.full_id} has no Singular UUID".light_yellow
           end
         end
       end

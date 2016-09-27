@@ -15,14 +15,14 @@ module EDST
         child: :parent,
         cousin: :cousin,
         friend: :friend,
-        grand_au: :grand_nn,
+        grand_pibling: :grand_chibling,
+        grand_chibling: :grand_pibling,
         grand_child: :grand_parent,
         grand_parent: :grand_child,
-        nn: :au,
         parent: :child,
         sibling: :sibling,
         spouse: :spouse,
-      }
+      }.freeze
 
       BRANCH_TO_COLLECTION = {
         adopted_parent: :adopted_parents,
@@ -38,15 +38,132 @@ module EDST
         child: :children,
         cousin: :cousins,
         friend: :friends,
-        grand_au: :grand_aus,
-        grand_nn: :grand_nns,
+        grand_pibling: :grand_piblings,
+        grand_chibling: :grand_chiblings,
         grand_child: :grand_children,
         grand_parent: :grand_parents,
-        nn: :nns,
         parent: :parents,
         sibling: :siblings,
         spouse: :spouses,
-      }
+      }.freeze
+
+      BRANCHES_BY_RELATION = {
+        "ex-wife" => [:spouse],
+        "ex-husband" => [:spouse],
+        "half-sister" => [:half_sibling, :sibling],
+        "half-brother" => [:half_sibling, :sibling],
+        "step-sister" => [:adopted_sibling, :sibling],
+        "step-brother" => [:adopted_sibling, :sibling],
+        "step-father" => [:adopted_parent, :parent],
+        "step-mother" => [:adopted_parent, :parent],
+        "step-daughter" => [:adopted_child, :child],
+        "step-son" => [:adopted_child, :child],
+        "grandfather" => [:grand_parent],
+        "grandmother" => [:grand_parent],
+        "grandaunt" => [:grand_pibling],
+        "granduncle" => [:grand_pibling],
+        "grandson" => [:grand_child],
+        "granddaughter" => [:grand_child],
+        "wife" => [:spouse],
+        "husband" => [:spouse],
+        "twin-sister" => [:twin_sibling, :biological_sibling, :sibling],
+        "twin-brother" => [:twin_sibling, :biological_sibling, :sibling],
+        "sister" => [:biological_sibling, :sibling],
+        "brother" => [:biological_sibling, :sibling],
+        "father" => [:biological_parent, :parent],
+        "mother" => [:biological_parent, :parent],
+        "niece" => [:chibling],
+        "nephew" => [:chibling],
+        "aunt" => [:pibling],
+        "uncle" => [:pibling],
+        "cousin" => [:cousin],
+        "son" => [:biological_child, :child],
+        "daughter" => [:biological_child, :child],
+        "friend" => [:friend],
+        "childhood friend" => [:friend]
+      }.freeze
+
+      # Returns a rough guestimation of the target's gender with the given word.
+      # Returns either, 'female', 'male', 'genderless', or 'unknown'
+      # 'unknown' is considered an error.
+      #
+      # @param [String] relation
+      # @return [String] male, female, genderless, unknown
+      def self.gender_of_relation(relation)
+        case relation
+        # feminine
+        when /grandmother/i, /daughter/i, /mother/i, /sister/i, /aunt/i, /niece/i, /wife/i, /woman/i, /maid/i
+          'female'
+        # masculine
+        when /grandfather/i, /son/i, /father/i, /brother/i, /uncle/i, /nephew/i, /husband/i, /man/i, /butler/i
+          'male'
+        when /friend/i, /cousin/i
+          'genderless'
+        else
+          'unknown'
+        end
+      end
+
+      # Ensures that
+      def self.test_gender(char, relation)
+        case expected = gender_of_relation(relation)
+        when 'female', 'male'
+          unless char.gender == expected
+            char.log.err "`relation` mismatch gender, expected to be `#{expected}`, but character is a `#{char.gender}`."
+            return false
+          end
+        when 'unknown'
+          char.log.err "`relation` unhandled relation type `#{word}`."
+          false
+        end
+        true
+      end
+
+      def self.branches_by_relation(relation)
+        key = relation.downcase
+        if BRANCHES_BY_RELATION.has_key?(key)
+          BRANCHES_BY_RELATION[key]
+        else
+          warn "unhandled relation `#{relation}`."
+          []
+        end
+      end
+
+      def self.invert_relation(relation, other_is_male)
+        case relation
+        when /ex-wife/, /ex-husband/
+          [other_is_male ? 'ex-husband' : 'ex-wife', nil]
+        when /(half|step|twin)-(sister|brother)/
+          prefix = $1
+          [other_is_male ? "#{prefix}-brother" : "#{prefix}-sister", nil]
+        when /step-(father|mother)/
+          [other_is_male ? 'step-son' : 'step-daughter', nil]
+        when /step-(daughter|son)/
+          [other_is_male ? 'step-father' : 'step-mother', nil]
+        when /grand(father|mother)/
+          [other_is_male ? 'grandson' : 'granddaughter', nil]
+        when /grand(aunt|uncle)/
+          [other_is_male ? 'grandnewphew' : 'grandniece', nil]
+        when /grand(daughter|son)/
+          [other_is_male ? 'grandfather' : 'grandmother', nil]
+        when /wife/, /husband/
+          [other_is_male ? 'husband' : 'wife', nil]
+        when /sister/, /brother/
+          [other_is_male ? 'brother' : 'sister', nil]
+        when /father/, /mother/
+          [other_is_male ? 'son' : 'daughter', nil]
+        when /niece/, /nephew/
+          [other_is_male ? 'uncle' : 'aunt', nil]
+        when /aunt/, /uncle/
+          [other_is_male ? 'nephew' : 'niece', nil]
+        when /son/, /daughter/
+          [other_is_male ? 'father' : 'mother', nil]
+        when /friend/, /childhood friend/, /cousin/
+          [relation, nil]
+        else
+          [nil, "unhandled relation `#{relation}` (should be `#{relation}` of `%<other_name>s`)."]
+        end
+      end
 
       attr_reader :character
       attr_reader :relation
@@ -59,45 +176,7 @@ module EDST
       end
 
       def determine_branches
-        case @relation.downcase
-        when "ex-wife", "ex-husband"
-          [:spouse]
-        when "half-sister", "half-brother"
-          [:half_sibling, :sibling]
-        when "step-sister", "step-brother"
-          [:adopted_sibling, :sibling]
-        when "step-father", "step-mother"
-          [:adopted_parent, :parent]
-        when "step-daughter", "step-son"
-          [:adopted_child, :child]
-        when "grandfather", "grandmother"
-          [:grand_parent]
-        when "grandaunt", "granduncle"
-          [:grand_au]
-        when "grandson", "granddaughter"
-          [:grand_child]
-        when "wife", "husband"
-          [:spouse]
-        when "twin-sister", "twin-brother"
-          [:twin_sibling, :biological_sibling, :sibling]
-        when "sister", "brother"
-          [:biological_sibling, :sibling]
-        when "father", "mother"
-          [:biological_parent, :parent]
-        when "niece", "nephew"
-          [:chibling]
-        when "aunt", "uncle"
-          [:pibling]
-        when "cousin"
-          [:cousin]
-        when "son", "daughter"
-          [:biological_child, :child]
-        when "friend", "childhood friend"
-          [:friend]
-        else
-          warn "unhandled relation `#{@relation}` (should be `#{@relation}` of `#{@target_name}`)."
-          []
-        end
+        CharacterRelation.branches_by_relation @relation
       end
 
       private def convert_branches_to_collections(branches)

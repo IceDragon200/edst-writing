@@ -20,12 +20,12 @@ module EDST
     self.relations = {}
     self.relations_by_alias = {}
 
-    def self.determine(scope, a, b)
+    def self.determine(a, b)
       return [] if a == b
       aleaf, bleaf = a.relation_leaf, b.relation_leaf
       @relations.each_with_object([]) do |(key, relation), acc|
-        #puts "Testing if `#{a.full_name}` is a `#{key}` of `#{b.full_name}`"
-        acc << relation if relation.match?(scope, aleaf, bleaf)
+        #puts "Testing if `#{a.display_name}` is a `#{key}` of `#{b.display_name}`"
+        acc << relation if relation.match?(aleaf, bleaf)
       end
     end
 
@@ -94,7 +94,7 @@ module EDST
     relation('biological-grandfather', is: { gender: 'male', parent_of_descendant: 2 })
     alias_relation('biological-grandparent', ['biological-grandmother', 'biological-grandfather'])
 
-    uncle_aunt_test = lambda do |_scope, pibling, child|
+    uncle_aunt_test = lambda do |pibling, child|
       # iterate through the child's parents
       child.parents.each do |parent|
         # if the parent has a sibling who happens to be this uncle/aunt
@@ -106,7 +106,7 @@ module EDST
     relation('aunt', is: { gender: 'female', constraint: uncle_aunt_test })
     relation('uncle', is: { gender: 'male', constraint: uncle_aunt_test })
 
-    cousin_test = lambda do |_scope, cousin, child|
+    cousin_test = lambda do |cousin, child|
       # the cousin's parents must not be the same as the child
       # and they must not have any parent in common
       if cousin.parents != child.parents && (cousin.parents & child.parents).empty?

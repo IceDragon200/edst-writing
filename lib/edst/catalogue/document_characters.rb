@@ -1,5 +1,6 @@
 require 'edst/catalogue/utils'
 require 'edst/catalogue/node_logger'
+require 'edst/catalogue/character_relation'
 
 module EDST
   module Catalogue
@@ -13,39 +14,6 @@ module EDST
         character.age = character.age.to_i
 
         character.gender = (character.gender && character.gender.downcase) || '<unknown>'
-      end
-
-      # Returns a rough guestimation of the target's gender with the given word.
-      # Returns either, 'female', 'male', 'genderless', or 'unknown'
-      # 'unknown' is considered an error.
-      def check_gender_of_word(word)
-        case word
-        # feminine
-        when /grandmother/i, /daughter/i, /mother/i, /sister/i, /aunt/i, /niece/i, /wife/i, /woman/i, /maid/i
-          'female'
-        # masculine
-        when /grandfather/i, /son/i, /father/i, /brother/i, /uncle/i, /nephew/i, /husband/i, /man/i, /butler/i
-          'male'
-        when /friend/i, /cousin/i
-          'genderless'
-        else
-          'unknown'
-        end
-      end
-
-      # Ensures that
-      def assert_gender(char, word)
-        case expected = check_gender_of_word(word)
-        when 'female', 'male'
-          unless char.gender == expected
-            char.log.err "`relation` mismatch gender, expected to be `#{expected}`, but character is a `#{char.gender}`."
-            return false
-          end
-        when 'unknown'
-          char.log.err "`relation` unhandled relation type `#{word}`."
-          false
-        end
-        true
       end
 
       def fetch_character(name)
@@ -70,22 +38,22 @@ module EDST
 
         ls.each_child do |ln|
           str = ln.value
-          d = Utils.parse_character_relation(str)
-          next char[:log].err "`relation` (#{str}) does not match (a of b) pattern." unless d
-
-          r = d[0]
-          n = d[1]
-          if rel_catalogue_char = @character_list.find_by_name(n)
-            if assert_gender(character, r)
+          relation, character_name = Utils.parse_character_relation(str)
+          unless relation && character_name
+            char[:log].err "`relation` (#{str}) does not match (a of b) pattern."
+            next
+          end
+          if rel_catalogue_char = @character_list.find_by_name(character_name)
+            if CharacterRelation.test_gender(character, relation)
               rmap = @relations_map[character.catalogue_character.base_id] ||= {}
               if node = @name_map[rel_catalogue_char.base_id]
-                (rmap[r.downcase] ||= []).push node
+                (rmap[relation.downcase] ||= []).push node
               else
                 char[:log].err "no such character #{frn}"
               end
             end
           else
-            char[:log].err "`relation` (#{str}) person does not exist."
+            char[:log].err "`relation` (#{character_name}) person does not exist."
           end
         end
       end
@@ -127,62 +95,25 @@ module EDST
           i_am_male = my_char.gender.downcase == 'male'
           rels.each_pair do |rel, list|
             list.each do |node|
-              their_char = node[:character]
-              their_first_name = their_char.first_name
-              they_are_male = their_char.gender.downcase == 'male'
-              relof = case rel
-              when /ex-wife/, /ex-husband/
-                they_are_male ? 'ex-husband' : 'ex-wife'
-
-              when /(half|step|twin)-(sister|brother)/
-                prefix = $1
-                they_are_male ? "#{prefix}-brother" : "#{prefix}-sister"
-
-              when /step-(father|mother)/
-                they_are_male ? 'step-son' : 'step-daughter'
-              when /step-(daughter|son)/
-                they_are_male ? 'step-father' : 'step-mother'
-
-              when /grand(father|mother)/
-                they_are_male ? 'grandson' : 'granddaughter'
-              when /grand(aunt|uncle)/
-                they_are_male ? 'grandnewphew' : 'grandniece'
-              when /grand(daughter|son)/
-                they_are_male ? 'grandfather' : 'grandmother'
-
-              when /wife/, /husband/
-                they_are_male ? 'husband' : 'wife'
-              when /sister/, /brother/
-                they_are_male ? 'brother' : 'sister'
-              when /father/, /mother/
-                they_are_male ? 'son' : 'daughter'
-              when /niece/, /nephew/
-                they_are_male ? 'uncle' : 'aunt'
-              when /aunt/, /uncle/
-                they_are_male ? 'nephew' : 'niece'
-              when /son/, /daughter/
-                they_are_male ? 'father' : 'mother'
-              when /friend/, /childhood friend/, /cousin/
-                rel
-              else
-                me[:log].warn "unhandled relation `#{rel}` (should be `#{rel}` of `#{their_first_name}`)."
-                nil
-              end
+              other_char = node[:character]
+              other_is_male = other_char.gender.downcase == 'male'
+              relof, err = CharacterRelation.invert_relation(rel, other_is_male)
+              me[:log].warn(err % { other_name: other_char.name }) if err
 
               next unless relof
-              b, _ = *does_relation_exist?(their_char.catalogue_character.base_id, relof, my_char.catalogue_character.base_id)
+              b, _ = *does_relation_exist?(other_char.catalogue_character.base_id, relof, my_char.catalogue_character.base_id)
               next unless b
               a1 = my_char.age.to_i
-              a2 = their_char.age.to_i
+              a2 = other_char.age.to_i
 
               child, parent = nil, nil
               case rel
               # only direct descendants are calculated
               when 'daughter', 'son'
                 child = my_char
-                parent = their_char
+                parent = other_char
               when 'father', 'mother'
-                child = their_char
+                child = other_char
                 parent = my_char
               end
 
@@ -249,13 +180,19 @@ module EDST
           cat_char = @character_list.add Catalogue::Character.new(id, char)
           ost = OpenStruct.new
           ost[:aliases] = []
-          char.each_child.select { |node| node.kind == :tag }.each do |node|
-            node_key = node.key.downcase
-            case node_key
-            when /\Aalias(?:\.(\S+))?/
-              ost[:aliases] << node.value
-            else
-              ost[node.key.downcase] = node.value
+          char.each_child do |node|
+            case node.kind
+            when :div
+              node_key = node.key.downcase
+              ost[node.key.downcase] = Catalogue::Utils.node_to_data(node)
+            when :tag
+              node_key = node.key.downcase
+              case node_key
+              when /\Aalias(?:\.(\S+))?/
+                ost[:aliases] << node.value
+              else
+                ost[node.key.downcase] = node.value
+              end
             end
           end
           ost.log = char[:log] # borrowing
