@@ -94,7 +94,8 @@ module EDST
     relation('biological-grandfather', is: { gender: 'male', parent_of_descendant: 2 })
     alias_relation('biological-grandparent', ['biological-grandmother', 'biological-grandfather'])
 
-    uncle_aunt_test = lambda do |pibling, child|
+    pibling_test = lambda do |pibling, child|
+      return true if child.piblings.include?(pibling)
       # iterate through the child's parents
       child.parents.each do |parent|
         # if the parent has a sibling who happens to be this uncle/aunt
@@ -103,8 +104,17 @@ module EDST
       false
     end
 
-    relation('aunt', is: { gender: 'female', constraint: uncle_aunt_test })
-    relation('uncle', is: { gender: 'male', constraint: uncle_aunt_test })
+    relation('aunt', is: { gender: 'female', constraint: pibling_test })
+    relation('uncle', is: { gender: 'male', constraint: pibling_test })
+
+    chibling_test = lambda do |child, adult|
+      # does the adult specify that it has a chibling?
+      return true if adult.chiblings.include?(child)
+      pibling_test.call(adult, child)
+    end
+
+    relation('niece', is: { gender: 'female', constraint: chibling_test })
+    relation('nephew', is: { gender: 'male', constraint: chibling_test })
 
     cousin_test = lambda do |cousin, child|
       # the cousin's parents must not be the same as the child
