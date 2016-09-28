@@ -133,33 +133,47 @@ module EDST
         case relation
         when /ex-wife/, /ex-husband/
           [other_is_male ? 'ex-husband' : 'ex-wife', nil]
+
         when /(half|step|twin)-(sister|brother)/
           prefix = $1
           [other_is_male ? "#{prefix}-brother" : "#{prefix}-sister", nil]
+
         when /step-(father|mother)/
           [other_is_male ? 'step-son' : 'step-daughter', nil]
+
         when /step-(daughter|son)/
           [other_is_male ? 'step-father' : 'step-mother', nil]
+
         when /grand(father|mother)/
           [other_is_male ? 'grandson' : 'granddaughter', nil]
+
         when /grand(aunt|uncle)/
           [other_is_male ? 'grandnewphew' : 'grandniece', nil]
+
         when /grand(daughter|son)/
           [other_is_male ? 'grandfather' : 'grandmother', nil]
+
         when /wife/, /husband/
           [other_is_male ? 'husband' : 'wife', nil]
+
         when /sister/, /brother/
           [other_is_male ? 'brother' : 'sister', nil]
+
         when /father/, /mother/
           [other_is_male ? 'son' : 'daughter', nil]
+
         when /niece/, /nephew/
           [other_is_male ? 'uncle' : 'aunt', nil]
+
         when /aunt/, /uncle/
           [other_is_male ? 'nephew' : 'niece', nil]
+
         when /son/, /daughter/
           [other_is_male ? 'father' : 'mother', nil]
+
         when /friend/, /childhood friend/, /cousin/
           [relation, nil]
+
         else
           [nil, "unhandled relation `#{relation}` (should be `#{relation}` of `%<other_name>s`)."]
         end
