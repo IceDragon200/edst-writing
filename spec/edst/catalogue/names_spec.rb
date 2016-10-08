@@ -50,3 +50,8 @@ describe EDST::Catalogue::Names do
     end
   end
 end
+
+describe EDST::Catalogue::Names::Name do
+  context '#pre_married_full_name' do
+  end
+end

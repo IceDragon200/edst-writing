@@ -1,5 +1,6 @@
 require 'edst/catalogue/utils'
 require 'edst/catalogue/character_relation'
+require 'edst/catalogue/names'
 
 module EDST
   module Catalogue
@@ -63,9 +64,19 @@ module EDST
         character_data.name
       end
 
+      # @return [Catalogue::Name] the character's names
       def names
         @names ||= Catalogue::Names.parse(character_data.name).tap do |n|
           n.aliases = character_data.aliases
+          n.pre_married_name = [
+            # gender-neutral format
+            character_data.pre_married_name,
+            # for the ladies
+            character_data.maiden_name,
+            # for the gentlemen
+            character_data.bachelor_name,
+            # you don't have a pre_married_name now do you.
+            character_data.last_name].find(&:present?)
         end
       end
 
@@ -95,6 +106,10 @@ module EDST
 
       def last_name
         names.last_name
+      end
+
+      def pre_married_name
+        names.pre_married_name
       end
 
       # A basic identifier for the character, spaces are replaced with - and the name is lower cased

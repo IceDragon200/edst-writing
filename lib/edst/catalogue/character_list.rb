@@ -19,9 +19,9 @@ module EDST
         return character
       end
 
-      def find_by_name(name, check_aliases: true)
+      def find_by_name(name, **options)
         @data.find do |character|
-          Catalogue::Names.equal?(character.names, name, check_aliases: check_aliases)
+          Catalogue::Names.equal?(character.names, name, **options)
         end
       end
 
