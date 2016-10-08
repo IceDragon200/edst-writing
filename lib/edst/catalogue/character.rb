@@ -1,6 +1,7 @@
 require 'edst/catalogue/utils'
 require 'edst/catalogue/character_relation'
 require 'edst/catalogue/names'
+require 'edst/catalogue/elements'
 
 module EDST
   module Catalogue
@@ -110,6 +111,26 @@ module EDST
 
       def pre_married_name
         names.pre_married_name
+      end
+
+      def has_elegens?
+        !!@has_elegens
+      end
+
+      def elements
+        @elements ||= begin
+          @has_elegens = false
+          Elements.parse(if elegens = character_data["elegens"]
+            @has_elegens = true
+            elegens
+          else
+            character_data["elements"]
+          end)
+        end
+      end
+
+      def has_elements?
+        elements.present?
       end
 
       # A basic identifier for the character, spaces are replaced with - and the name is lower cased

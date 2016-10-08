@@ -137,6 +137,14 @@ module EDST
         end
       end
 
+      def validate_characters_elements
+        @character_list.each do |char|
+          if char.elements
+            Catalogue::Elements.validate_character_elements(char)
+          end
+        end
+      end
+
       def load_characters_main(filenames)
         @name_map = {}
         @relations_map = {}
@@ -223,6 +231,9 @@ module EDST
         pool.each do |char|
           check_relations(char)
         end
+
+        puts ".. \tValidating elements/elegens"
+        validate_characters_elements
 
         puts ".. \tCross checking relations"
         crosscheck_relations
