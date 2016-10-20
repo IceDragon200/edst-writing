@@ -81,8 +81,12 @@ module EDST
         end
 
         def validate_element_rank(errors, element, rank)
-          unless rank.original_string =~ /\ARank\s+[IVXC]+/
-            errors << "has malformed element rank `#{rank}` for `#{element}`"
+          if rank
+            unless rank.original_string =~ /\ARank\s+[IVXC]+/
+              errors << "has malformed element rank `#{rank}` for `#{element}`"
+            end
+          else
+            errors << "missing element rank `#{rank}` for `#{element}`"
           end
           errors
         end
@@ -94,6 +98,7 @@ module EDST
         end
 
         def validate_element_mutations(errors, element, rank)
+          return errors unless rank
           primary_element_name = case element
           when "crystallo"
             "earth"
@@ -121,6 +126,7 @@ module EDST
         end
 
         def validate_element_combinations(errors, element, rank)
+          return errors unless rank
           comps = Elements.to_element_components(element)
           elements = case comps
           # mutations
@@ -228,6 +234,7 @@ module EDST
       end
 
       def self.parse(data)
+        return [] unless data.present?
         case data
         when Array
           case data[0]

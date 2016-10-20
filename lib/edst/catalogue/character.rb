@@ -120,17 +120,25 @@ module EDST
       def elements
         @elements ||= begin
           @has_elegens = false
-          Elements.parse(if elegens = character_data["elegens"]
+          source = (if elegens = character_data["elegens"]
             @has_elegens = true
             elegens
           else
             character_data["elements"]
-          end)
+          end || []).map(&:presence).compact
+          Elements.parse(source)
         end
       end
 
       def has_elements?
         elements.present?
+      end
+
+      def spirit_overlays
+        @spirit_overlays ||= begin
+          source = character_data["spirit_overlays"] || []
+          Catalogue::Utils.unroll_data(source).to_a
+        end
       end
 
       # A basic identifier for the character, spaces are replaced with - and the name is lower cased

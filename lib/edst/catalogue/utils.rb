@@ -38,18 +38,38 @@ module EDST
 
       def self.node_to_data(node)
         case node.kind
-        when :div
+        when :div, :list
           result = []
           node.each_child do |child|
-            result << node_to_data(child)
+            obj = node_to_data(child)
+            result << obj if obj
           end
           [:list, result]
         when :tag
           [:tuple, [node.key, node.value]]
-        when :p
+        when :p, :ln
           [:value, node.value]
-        else
+        when :comment
           nil
+        else
+          raise "unhandled node kind `#{node.kind.inspect}`"
+        end
+      end
+
+      def self.unroll_data(node, &block)
+        return unless node.present?
+        return to_enum :unroll_data, node unless block_given?
+        kind, value = node
+        case kind
+        when :list
+          value.each do |child|
+            unroll_data(child, &block)
+          end
+        when :value, :tag
+          block.call(value)
+        else
+          p node
+          raise "unhandled node kind `#{kind.inspect}`"
         end
       end
 
