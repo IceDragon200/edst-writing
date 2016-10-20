@@ -58,6 +58,10 @@ module EDST
         "step-mother" => [:adopted_parent, :parent],
         "step-daughter" => [:adopted_child, :child],
         "step-son" => [:adopted_child, :child],
+        "foster-father" => [:adopted_parent, :parent],
+        "foster-mother" => [:adopted_parent, :parent],
+        "foster-daughter" => [:adopted_child, :child],
+        "foster-son" => [:adopted_child, :child],
         "grandfather" => [:grand_parent],
         "grandmother" => [:grand_parent],
         "grandaunt" => [:grand_pibling],
@@ -131,12 +135,18 @@ module EDST
 
       def self.invert_relation(relation, other_is_male)
         case relation
-        when /ex-wife/, /ex-husband/
+        when 'ex-wife', 'ex-husband'
           [other_is_male ? 'ex-husband' : 'ex-wife', nil]
 
         when /(half|step|twin)-(sister|brother)/
           prefix = $1
           [other_is_male ? "#{prefix}-brother" : "#{prefix}-sister", nil]
+
+        when /foster-(father|mother)/
+          [other_is_male ? 'foster-son' : 'foster-daughter', nil]
+
+        when /foster-(daughter|son)/
+          [other_is_male ? 'foster-father' : 'foster-mother', nil]
 
         when /step-(father|mother)/
           [other_is_male ? 'step-son' : 'step-daughter', nil]
@@ -153,25 +163,25 @@ module EDST
         when /grand(daughter|son)/
           [other_is_male ? 'grandfather' : 'grandmother', nil]
 
-        when /wife/, /husband/
+        when 'wife', 'husband'
           [other_is_male ? 'husband' : 'wife', nil]
 
-        when /sister/, /brother/
+        when 'sister', 'brother'
           [other_is_male ? 'brother' : 'sister', nil]
 
-        when /father/, /mother/
+        when 'father', 'mother'
           [other_is_male ? 'son' : 'daughter', nil]
 
-        when /niece/, /nephew/
+        when 'niece', 'nephew'
           [other_is_male ? 'uncle' : 'aunt', nil]
 
-        when /aunt/, /uncle/
+        when 'aunt', 'uncle'
           [other_is_male ? 'nephew' : 'niece', nil]
 
-        when /son/, /daughter/
+        when 'son', 'daughter'
           [other_is_male ? 'father' : 'mother', nil]
 
-        when /friend/, /childhood friend/, /cousin/
+        when 'childhood friend', 'best friend', 'friend', 'cousin'
           [relation, nil]
 
         else
