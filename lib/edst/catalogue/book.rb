@@ -31,7 +31,7 @@ module EDST
       end
 
       private def load_arcs_from_files
-        arcs_glob = book_pathname('chapter/arc*.edst')
+        arcs_glob = book_pathname('{chapter,chapters}/arc*.edst')
         puts arcs_glob
         files = Dir.glob(arcs_glob)
         files.each do |filename|
@@ -53,7 +53,7 @@ module EDST
       end
 
       private def load_characters
-        files = Dir.glob(book_pathname('character/*.edst'))
+        files = Dir.glob(book_pathname('{character,characters}/*.edst'))
         load_and_validate_characters(files)
       end
 

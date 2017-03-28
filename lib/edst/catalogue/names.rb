@@ -33,14 +33,20 @@ module EDST
 
         def each_pair
           return to_enum :each_pair unless block_given?
+          yield :aliases, aliases if aliases.present?
           yield :first_name, first_name if first_name.present?
           #yield :middle_name, middle_name if middle_name.present?
           yield :middle_names, middle_names if middle_names.present?
           yield :last_name, last_name if last_name.present?
+          yield :pre_married_name, pre_married_name if pre_married_name.present?
         end
 
         def to_s
           [first_name, *(middle_names || []), last_name].compact.join(" ")
+        end
+
+        def pretty_format
+          [first_name, aliases.map {|a| "(#{a})"}, *(middle_names || []), last_name].select(&:present?).compact.join(" ")
         end
       end
 

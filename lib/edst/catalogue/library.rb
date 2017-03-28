@@ -29,7 +29,7 @@ module EDST
     class Library
       # A hash containing all books, mapped by id
       attr_reader :books
-      # An Array containing ALL the characters current available in the library
+      # An Array containing ALL the characters currently available in the library
       attr_reader :characters
       # A hash mapping the character's full_id to the character
       attr_reader :character_by_full_id

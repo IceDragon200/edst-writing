@@ -7,6 +7,9 @@ module EDST
       attr_reader :character
 
       GROUPS = [
+        :grand_parents,
+        :grand_children,
+
         :biological_parents,
         :adopted_parents,
         :parents,

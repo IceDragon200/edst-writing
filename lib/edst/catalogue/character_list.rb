@@ -4,6 +4,8 @@ require 'edst/catalogue/names'
 module EDST
   module Catalogue
     class CharacterList
+      include Enumerable
+
       attr_reader :data
 
       def initialize(i = [])

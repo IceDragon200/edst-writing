@@ -1,4 +1,5 @@
 require 'edst/catalogue/names'
+require 'edst/catalogue/node_tracking'
 
 module EDST
   module Catalogue
@@ -106,29 +107,46 @@ module EDST
         return nil, nil
       end
 
+      def self.capitalize_tag_key(key)
+        case key
+        when "id"
+          "ID"
+        else
+          key.capitalize
+        end
+      end
+
       def self.write_edst_node_to_text(tracking, file, node)
         track = tracking.fork node
         case node.kind
         when :tag
           case node.key
-          when '.branch', '.pov', '.time'
+          when /^&(\S+)/
             puts "Skipping %s tag %s" % [node.key, node.value]
           else
-            if node.value
-              file.puts "#{node.key.capitalize} = #{node.value.grammar_deflate}"
+            if node.value.to_s.strip != ""
+              file.puts "#{capitalize_tag_key(node.key)} = #{grammar_deflate(node.value)}."
             else
-              file.puts "#{node.key.capitalize}"
+              file.puts "#{capitalize_tag_key(node.key)}."
             end
+            file.puts
           end
         when :dialogue
-          file.puts "#{node.key}: #{node.value.grammar_deflate}"
-          file.puts
+          file.puts "\t#{node.key}: #{grammar_deflate(node.value)}"
+          file.puts ""
         when :label
-          file.puts
-          file.puts "___ #{node.value.grammar_deflate} ___"
-          file.puts
+          file.puts ""
+          file.puts ":: #{grammar_deflate(node.value)}"
+          file.puts ""
         when :p
-          file.puts "#{node.value.grammar_deflate}"
+          file.puts "#{grammar_deflate(node.value)}"
+          file.puts ""
+        when :div
+          file.puts
+          file.puts "#{node.key.upcase}."
+          node.each_child do |child|
+            write_edst_node_to_text(track, file, child)
+          end
           file.puts
         else
           node.each_child do |child|
@@ -137,14 +155,18 @@ module EDST
         end
       end
 
+      def self.write_edst_as_text_to_io(node, io)
+        tracking = NodeTracking.new
+        node.search('div') do |body|
+          write_edst_node_to_text(tracking, io, body)
+          io.puts ""
+        end
+      end
+
       def self.edst_to_text(node, filename)
         FileUtils::Verbose.mkdir_p File.dirname(filename)
         File.open(filename, 'w') do |file|
-          tracking = NodeTracking.new
-          node.search('div') do |body|
-            write_edst_node_to_text(tracking, file, body)
-            file.puts
-          end
+          write_edst_as_text_to_io(node, file)
           #file.puts
           #file.puts
           #node.search('div.bloopers') do |body|
