@@ -44,7 +44,7 @@ module EDST
         chapter_ids.each do |chapter_id|
           ['%04d', '%03d', '%02d', '%d'].each do |pattern|
             id_str = pattern % chapter_id.to_i
-            files = Dir.glob(book_pathname("chapter/ch#{id_str}.edst"))
+            files = Dir.glob(book_pathname("{chapter,chapters}/ch#{id_str}.edst"))
             files.each do |filename|
               doc = EDST::Document.load_file(filename)
               result << Chapter.new(

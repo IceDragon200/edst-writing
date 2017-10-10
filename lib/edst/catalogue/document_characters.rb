@@ -53,7 +53,7 @@ module EDST
               end
             end
           else
-            char[:log].err "`relation` (#{character_name}) person does not exist."
+            char[:log].err "`relation` (#{character_name}) character does not exist."
           end
         end
       end
@@ -191,8 +191,12 @@ module EDST
           char.each_child do |node|
             case node.kind
             when :div
-              node_key = node.key.downcase
-              ost[node.key.downcase] = Catalogue::Utils.node_to_data(node)
+              if node.key
+                node_key = node.key.downcase
+                ost[node.key.downcase] = Catalogue::Utils.node_to_data(node)
+              else
+                char[:log].err 'missing div key'
+              end
             when :tag
               node_key = node.key.downcase
               case node_key
