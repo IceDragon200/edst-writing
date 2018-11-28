@@ -4,11 +4,21 @@ module EDST
       def chapter_frags
         @chapter_frags ||= begin
           result = []
-          filenames = Dir.glob(book_pathname("{chapter,chapters}/{frag,frags}/**/*.edst"))
+          frag_glob_pathname = book_pathname("{chapter,chapters}/{frag,frags}/**/*.edst")
+          filenames = Dir.glob(frag_glob_pathname)
           filenames.each do |filename|
-            doc = EDST::Document.load_file(filename)
-            unless doc.search('div.head').empty?
+            # skip any filename that starts with __, those are usually template files
+            next if File.basename(filename).start_with?("__")
+            doc = begin
+              EDST::Document.load_file(filename, debug: true)
+            rescue => ex
+              puts "`#{File.expand_path(filename)}` failed to load"
+              raise ex
+            end
+
+            unless doc.search('div.head').to_a.empty?
               result << Chapter.new(
+                is_frag: true,
                 book: self,
                 cluster: nil,
                 filename: filename,

@@ -89,7 +89,7 @@ module EDST
           if character.sinuuid
             (chars_by_sinuuid[character.sinuuid] ||= []).push(character)
           else
-            warn "#{character.full_id} has no Singular UUID".light_yellow
+            #warn "#{character.full_id} has no Singular UUID".light_yellow
           end
         end
       end

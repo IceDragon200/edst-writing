@@ -32,7 +32,6 @@ module EDST
 
       private def load_arcs_from_files
         arcs_glob = book_pathname('{chapter,chapters}/arc*.edst')
-        puts arcs_glob
         files = Dir.glob(arcs_glob)
         files.each do |filename|
           doc = EDST::Document.load_file(filename)
@@ -139,7 +138,7 @@ module EDST
         book_node = document.search('div.book').first
         if book_node
           book = Catalogue::Book.new(
-            filename: filename,
+            #filename: filename,
             document: book_node).tap(&:relation_tree)
           book.load_everything unless lazy_load
           book

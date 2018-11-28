@@ -10,14 +10,21 @@ module EDST
       attr_reader :number
       attr_accessor :data
 
-      def initialize(book:, document:, cluster:, extern:, filename: nil)
+      def initialize(book:, document:, cluster:, is_frag: false, extern:, filename: nil)
+        @is_frag = is_frag
         @extern = extern
         @book = book
         @document = document
         @filename = filename || @document.filename || @book.filename
         @cluster = cluster
         initialize_document
-        @number = find_head_node('chapter').value.to_i
+        unless @is_frag
+          @number = find_head_node('chapter').value.to_i
+        end
+      end
+
+      def is_frag?
+        @is_frag
       end
 
       def book_pathname(*args)

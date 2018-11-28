@@ -101,6 +101,7 @@ module EDST
           raise ArgumentError, "invalid constraint key `#{key.inspect}`"
         end
       end
+      return true
     end
   end
 end

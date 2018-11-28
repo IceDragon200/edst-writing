@@ -46,7 +46,12 @@ module EDST
             id_str = pattern % chapter_id.to_i
             files = Dir.glob(book_pathname("{chapter,chapters}/ch#{id_str}.edst"))
             files.each do |filename|
-              doc = EDST::Document.load_file(filename)
+              doc = begin
+                EDST::Document.load_file(filename, debug: true)
+              rescue => ex
+                puts "`#{File.expand_path(filename)}` failed to load"
+                raise ex
+              end
               result << Chapter.new(
                 book: self,
                 cluster: self,
