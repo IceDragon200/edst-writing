@@ -35,7 +35,7 @@ module EDST
         return char[:log].err '`relation` is missing a `list`.' unless ls
 
         character = char[:character]
-        char[:log].warn "character doesn't have a gender tag." unless EDST::Util.present?(character.gender)
+        char[:log].warn "character doesn't have a gender tag." unless EDST::Util.is_present?(character.gender)
 
         ls.each_child do |ln|
           str = ln.value
@@ -161,10 +161,10 @@ module EDST
           root[:log] = NodeLogger.new(root)
 
           chars = []
-          if EDST::Util.present?(char = Utils.lookup(root, 'div.character'))
+          if EDST::Util.is_present?(char = Utils.lookup(root, 'div.character'))
             chars = char
-          elsif EDST::Util.present?(dchars = Utils.lookup(root, 'div.characters'))
-            unless EDST::Util.present?(chars = Utils.lookup(dchars[0], 'div.character'))
+          elsif EDST::Util.is_present?(dchars = Utils.lookup(root, 'div.characters'))
+            unless EDST::Util.is_present?(chars = Utils.lookup(dchars[0], 'div.character'))
               root[:log].err 'div.characters is empty.'
             end
           else

@@ -59,7 +59,7 @@ module EDST
       end
 
       def self.unroll_data(node, &block)
-        return unless EDST::Util.present?(node)
+        return unless EDST::Util.is_present?(node)
         return to_enum :unroll_data, node unless block_given?
         kind, value = node
         case kind

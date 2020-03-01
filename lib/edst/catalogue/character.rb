@@ -80,7 +80,7 @@ module EDST
             # you don't have a pre_married_name now do you.
             character_data.last_name
           ].find do |str|
-            EDST::Util.present?(str)
+            EDST::Util.is_present?(str)
           end
         end
       end
@@ -139,7 +139,7 @@ module EDST
       end
 
       def has_elements?
-        EDST::Util.present?(elements)
+        EDST::Util.is_present?(elements)
       end
 
       def spirit_overlays

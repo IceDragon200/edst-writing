@@ -33,12 +33,12 @@ module EDST
 
         def each_pair
           return to_enum :each_pair unless block_given?
-          yield :aliases, aliases if EDST::Util.present?(aliases)
-          yield :first_name, first_name if EDST::Util.present?(first_name)
-          #yield :middle_name, middle_name if middle_name.present?
-          yield :middle_names, middle_names if EDST::Util.present?(middle_names)
-          yield :last_name, last_name if EDST::Util.present?(last_name)
-          yield :pre_married_name, pre_married_name if EDST::Util.present?(pre_married_name)
+          yield :aliases, aliases if EDST::Util.is_present?(aliases)
+          yield :first_name, first_name if EDST::Util.is_present?(first_name)
+          #yield :middle_name, middle_name if middle_name.is_present?
+          yield :middle_names, middle_names if EDST::Util.is_present?(middle_names)
+          yield :last_name, last_name if EDST::Util.is_present?(last_name)
+          yield :pre_married_name, pre_married_name if EDST::Util.is_present?(pre_married_name)
         end
 
         def to_s
@@ -52,7 +52,7 @@ module EDST
             *(middle_names || []),
             last_name
           ].select do |str|
-            EDST::Util.present?(str)
+            EDST::Util.is_present?(str)
           end.compact.join(" ")
         end
       end
@@ -92,12 +92,12 @@ module EDST
         elsif remaining.size == 1
           name.first_name = remaining.first
         end
-        name.aliases = EDST.Util.presence(aliases)
+        name.aliases = EDST::Util.presence(aliases)
         name
       end
 
       def self.equal_middle_name?(actual, expected, **_options)
-        if EDST::Util.present?(actual.middle_names) && EDST::Util.present?(expected.middle_names)
+        if EDST::Util.is_present?(actual.middle_names) && EDST::Util.is_present?(expected.middle_names)
           unless (actual.middle_names & expected.middle_names) == expected.middle_names
             return false
           end
@@ -107,11 +107,11 @@ module EDST
 
       def self.equal_last_name?(actual, expected, check_pre_married_name: true)
         if check_pre_married_name
-          if actual.last_name && EDST::Util.present?(expected.pre_married_name)
+          if actual.last_name && EDST::Util.is_present?(expected.pre_married_name)
             return true if expected.pre_married_name == actual.last_name
           end
 
-          if expected.last_name && EDST::Util.present?(actual.pre_married_name)
+          if expected.last_name && EDST::Util.is_present?(actual.pre_married_name)
             return true if actual.pre_married_name == expected.last_name
           end
         end
@@ -125,11 +125,11 @@ module EDST
 
       def self.equal_first_name?(actual, expected, check_aliases: true)
         if check_aliases
-          if actual.first_name && EDST::Util.present?(expected.aliases)
+          if actual.first_name && EDST::Util.is_present?(expected.aliases)
             return true if expected.aliases.include?(actual.first_name)
           end
 
-          if expected.first_name && EDST::Util.present?(actual.aliases)
+          if expected.first_name && EDST::Util.is_present?(actual.aliases)
             return true if actual.aliases.include?(expected.first_name)
           end
         end

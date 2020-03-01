@@ -234,7 +234,7 @@ module EDST
       end
 
       def self.parse(data)
-        return [] unless EDST::Util.present?(data)
+        return [] unless EDST::Util.is_present?(data)
         case data
         when Array
           case data[0]
