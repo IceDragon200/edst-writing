@@ -2,6 +2,7 @@ require 'edst/catalogue/utils'
 require 'edst/catalogue/character_relation'
 require 'edst/catalogue/names'
 require 'edst/catalogue/elements'
+require 'edst/util'
 
 module EDST
   module Catalogue
@@ -77,7 +78,10 @@ module EDST
             # for the gentlemen
             character_data.bachelor_name,
             # you don't have a pre_married_name now do you.
-            character_data.last_name].find(&:present?)
+            character_data.last_name
+          ].find do |str|
+            EDST::Util.present?(str)
+          end
         end
       end
 
@@ -120,18 +124,22 @@ module EDST
       def elements
         @elements ||= begin
           @has_elegens = false
-          source = (if elegens = character_data["elegens"]
-            @has_elegens = true
-            elegens
-          else
-            character_data["elements"]
-          end || []).map(&:presence).compact
+          source =
+            (if elegens = character_data["elegens"]
+              @has_elegens = true
+              elegens
+            else
+              character_data["elements"]
+            end || []).map do |str|
+              EDST::Util.presence(str)
+            end.compact
+
           Elements.parse(source)
         end
       end
 
       def has_elements?
-        elements.present?
+        EDST::Util.present?(elements)
       end
 
       def spirit_overlays

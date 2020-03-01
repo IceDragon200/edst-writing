@@ -17,14 +17,9 @@ Gem::Specification.new do |s|
   s.authors = ['Corey Powell']
   s.email  = 'mistdragon100@gmail.com'
 
-  s.add_runtime_dependency 'activesupport',  '>= 4.2', '< 6.0'
-  s.add_runtime_dependency 'colorize',       '~> 0.7'
-  s.add_runtime_dependency 'rake',           '~> 10.3'
-  s.add_runtime_dependency 'edst',           '~> 0.32'
-  s.add_runtime_dependency 'edst-documents', '~> 0.3'
+  s.add_runtime_dependency 'edst',           '~> 1.0'
+  s.add_runtime_dependency 'edst-documents', '~> 1.0'
   # dev
-  s.add_development_dependency 'codeclimate-test-reporter', '~> 0'
-  s.add_development_dependency 'simplecov', '~> 0'
   s.add_development_dependency 'rspec',     '~> 3.1'
 
   s.require_path = 'lib'

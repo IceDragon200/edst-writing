@@ -1,5 +1,6 @@
 require 'edst/catalogue/names'
 require 'edst/catalogue/node_tracking'
+require 'edst/util'
 
 module EDST
   module Catalogue
@@ -58,7 +59,7 @@ module EDST
       end
 
       def self.unroll_data(node, &block)
-        return unless node.present?
+        return unless EDST::Util.present?(node)
         return to_enum :unroll_data, node unless block_given?
         kind, value = node
         case kind

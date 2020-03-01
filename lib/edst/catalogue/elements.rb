@@ -234,12 +234,12 @@ module EDST
       end
 
       def self.parse(data)
-        return [] unless data.present?
+        return [] unless EDST::Util.present?(data)
         case data
         when Array
           case data[0]
           when :value
-            value = data[1] == ".." ? nil : data[1].presence
+            value = data[1] == ".." ? nil : EDST::Util.presence(data[1])
             value ? [value, nil] : nil
           when :tuple
             element, rank = data[1]

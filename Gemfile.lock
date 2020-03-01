@@ -1,0 +1,59 @@
+GIT
+  remote: https://github.com/IceDragon200/edst-documents.git
+  revision: ac937713517e05a0fac3b437735fecad06343547
+  specs:
+    edst-documents (1.0.0)
+      edst (~> 1.0)
+
+GIT
+  remote: https://github.com/IceDragon200/edst.git
+  revision: 440b0f0d05d6032ae42e5323125a9661a97971c8
+  specs:
+    edst (1.0.0)
+      colorize (~> 0.7)
+      erubis (~> 2.7)
+      sassc (~> 2.2)
+      tilt (~> 2.0)
+
+PATH
+  remote: .
+  specs:
+    edst-writing (1.0.0)
+      edst (~> 1.0)
+      edst-documents (~> 1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    colorize (0.8.1)
+    diff-lcs (1.3)
+    erubis (2.7.0)
+    ffi (1.12.2)
+    rspec (3.9.0)
+      rspec-core (~> 3.9.0)
+      rspec-expectations (~> 3.9.0)
+      rspec-mocks (~> 3.9.0)
+    rspec-core (3.9.1)
+      rspec-support (~> 3.9.1)
+    rspec-expectations (3.9.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.9.0)
+    rspec-mocks (3.9.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.9.0)
+    rspec-support (3.9.2)
+    sassc (2.2.1)
+      ffi (~> 1.9)
+    tilt (2.0.10)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  edst (~> 1.0)!
+  edst-documents (~> 1.0)!
+  edst-writing!
+  rspec (~> 3.1)
+
+BUNDLED WITH
+   2.1.4

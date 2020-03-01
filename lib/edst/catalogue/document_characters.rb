@@ -1,6 +1,7 @@
 require 'edst/catalogue/utils'
 require 'edst/catalogue/node_logger'
 require 'edst/catalogue/character_relation'
+require 'edst/util'
 
 module EDST
   module Catalogue
@@ -34,7 +35,7 @@ module EDST
         return char[:log].err '`relation` is missing a `list`.' unless ls
 
         character = char[:character]
-        char[:log].warn "character doesn't have a gender tag." unless character.gender.present?
+        char[:log].warn "character doesn't have a gender tag." unless EDST::Util.present?(character.gender)
 
         ls.each_child do |ln|
           str = ln.value
@@ -69,7 +70,7 @@ module EDST
           return false, nil
         end
 
-        chars = rels[relof].presence
+        chars = EDST::Util.presence(rels[relof])
         unless chars
           node[:log].warn "`#{name}` does not have a `#{relof}` relation list. (expected to be a `#{relof}` of `#{expected_base_id}`)"
           return false, nil
@@ -152,7 +153,7 @@ module EDST
 
         pool = []
         files_checked = 0
-        sources = filenames.presence || Dir.glob('character/*.edst')
+        sources = EDST::Util.presence(filenames) || Dir.glob('character/*.edst')
         sources.sort.each do |filename|
           next if File.basename(filename).start_with?('#')
           root = EDST::Document.load_file(filename)
@@ -160,10 +161,10 @@ module EDST
           root[:log] = NodeLogger.new(root)
 
           chars = []
-          if (char = Utils.lookup(root, 'div.character')).present?
+          if EDST::Util.present?(char = Utils.lookup(root, 'div.character'))
             chars = char
-          elsif (dchars = Utils.lookup(root, 'div.characters')).present?
-            unless (chars = Utils.lookup(dchars[0], 'div.character')).present?
+          elsif EDST::Util.present?(dchars = Utils.lookup(root, 'div.characters'))
+            unless EDST::Util.present?(chars = Utils.lookup(dchars[0], 'div.character'))
               root[:log].err 'div.characters is empty.'
             end
           else
