@@ -30,7 +30,7 @@ module EDST
     end
 
     def self.relation(name, **options)
-      RelationBuilder.new(name, options).tap do |relation|
+      RelationBuilder.new(name, **options).tap do |relation|
         relations[relation.name] = relation.linked
         relations_by_alias[relation.name] = [relation.linked]
       end

@@ -11,8 +11,10 @@ module EDST
       def patch_character(character)
         OpenStruct.conj! character, Utils.parse_character_name(character.name)
 
-        # patch the age
-        character.age = character.age.to_i
+        # do not patch age
+        if character.age then
+          character.age = character.age.to_i
+        end
 
         character.gender = (character.gender && character.gender.downcase) || '<unknown>'
       end
@@ -27,7 +29,9 @@ module EDST
       end
 
       def check_relations(char)
-        rel = Utils.lookup(char, 'div.relation').first
+        rel = Utils.lookup(char, 'div.relation').first ||
+          Utils.lookup(char, 'div.relations').first
+
         return char[:log].warn 'missing `relation` div.' unless rel
         return char[:log].err 'empty `relation` div.' unless rel.has_children?
 
@@ -38,23 +42,34 @@ module EDST
         char[:log].warn "character doesn't have a gender tag." unless EDST::Util.is_present?(character.gender)
 
         ls.each_child do |ln|
-          str = ln.value
-          relation, character_name = Utils.parse_character_relation(str)
-          unless relation && character_name
-            char[:log].err "`relation` (#{str}) does not match (a of b) pattern."
-            next
-          end
-          if rel_catalogue_char = @character_list.find_by_name(character_name)
-            if CharacterRelation.test_gender(character, relation)
-              rmap = @relations_map[character.catalogue_character.base_id] ||= {}
-              if node = @name_map[rel_catalogue_char.base_id]
-                (rmap[relation.downcase] ||= []).push node
-              else
-                char[:log].err "no such character #{frn}"
+          case ln.kind
+          when :comment
+            # skip comments
+          when :ln
+            str = ln.value
+            relation, character_name = Utils.parse_character_relation(str)
+            unless relation && character_name
+              char[:log].err "`relation` (#{str}) does not match (a of b) pattern."
+              next
+            end
+            rel_catalogue_char = @character_list.find_by_name(character_name)
+            if rel_catalogue_char
+              normalized_relation = relation.downcase
+              if CharacterRelation.test_gender(character, relation)
+                rmap = @relations_map[character.catalogue_character.base_id] ||= {}
+                node = @name_map[rel_catalogue_char.base_id]
+                if node
+                  # puts "DEBUG: Adding #{character.name} as #{normalized_relation} of #{character_name}"
+                  (rmap[normalized_relation] ||= []).push(node)
+                else
+                  char[:log].err "no such character #{frn}"
+                end
               end
+            else
+              char[:log].err "`relation` (#{character_name}) character does not exist."
             end
           else
-            char[:log].err "`relation` (#{character_name}) character does not exist."
+            raise "unexpected element #{ln.kind}"
           end
         end
       end
@@ -119,7 +134,11 @@ module EDST
               end
 
               if child && parent
-                if parent.age == 0 and child.age == 0
+                if parent.age.nil?
+                  puts "\tParent `#{parent.first_name.light_magenta}` has no age"
+                elsif child.age.nil?
+                  puts "\tChild `#{child.first_name.light_magenta}` has no age"
+                elsif parent.age == 0 and child.age == 0
                   puts "\tAges cannot be determined for `#{parent.first_name.light_magenta}` and `#{child.first_name.light_magenta}`."
                 elsif child.age == 0
                   puts "\tChild #{child.first_name.light_magenta} has no age!"
@@ -218,7 +237,9 @@ module EDST
             char[:log].warn "Name (#{cat_char.base_id}) was already mapped for #{m[:filename]}"
           else
             char[:name] = ost.name
-            if ost.age == 0
+            if ost.age.nil?
+              char[:log].warn "Has no age."
+            elsif ost.age == 0
               char[:log].warn "Age is 0, are you sure thats what you wanted?"
             end
             char[:character].catalogue_character = cat_char

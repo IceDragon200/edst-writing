@@ -82,7 +82,13 @@ module EDST
         @characters.each do |character|
           char_by_full_id[character.full_id] = character
           if character.uuid
-            char_by_uuid[character.uuid] = character
+            begin
+              char_by_uuid[character.uuid] = character
+            rescue KeyError => ex
+              old_character = char_by_uuid[character.uuid]
+              warn "#{character.full_id} UUID is already taken by #{old_character.full_id}"
+              raise ex
+            end
           else
             warn "#{character.full_id} has no UUID".light_yellow
           end

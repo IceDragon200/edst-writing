@@ -3,12 +3,17 @@ require 'set'
 module EDST
   module Catalogue
     class RelationLeaf
+      attr_reader :groups
       # the current character
       attr_reader :character
 
       GROUPS = [
+        :great_grand_parents,
+        :great_grand_children,
         :grand_parents,
         :grand_children,
+        :grand_piblings,
+        :grand_chiblings,
 
         :biological_parents,
         :adopted_parents,
@@ -41,24 +46,28 @@ module EDST
         @character.relation_leaf = self if @character
         @groups = []
         @group_by_name = {}
-        GROUPS.each do |group|
-          add_group group
+        GROUPS.each do |group_name|
+          add_group(group_name)
         end
       end
 
       def name
-        @character.name
+        @character&.name
       end
 
       def display_name
-        @character.display_name
+        @character&.display_name
       end
 
-      private def add_group(name)
+      private def add_group(group_name)
         #result = Set.new
         result = []
-        @group_by_name[name] = result
-        @groups << [name, result]
+        @group_by_name[group_name] = result
+        @groups << [group_name, result]
+      end
+
+      def add_to_group(group_name, leaf)
+        @group_by_name[group_name].push(leaf)
       end
 
       def ancestors

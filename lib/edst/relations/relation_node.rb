@@ -11,7 +11,7 @@ module EDST
     end
 
     def display_title
-      @key.titlecase
+      EDST::Util.titlecase(@key)
     end
 
     def to_s

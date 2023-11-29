@@ -77,6 +77,7 @@ module EDST
       end
 
       def self.parse(str)
+        return nil if str.nil?
         return str if str.kind_of?(Name)
         name = Name.new
         aliases, remaining = extract_aliases str.split(/\s+/)
@@ -143,11 +144,15 @@ module EDST
       def self.equal?(aname, bname, check_aliases: true, check_pre_married_name: true)
         actual, expected = parse(aname), parse(bname)
 
-        return false unless equal_middle_name?(actual, expected)
-        return false unless equal_last_name?(actual, expected, check_pre_married_name: check_pre_married_name)
-        return false unless equal_first_name?(actual, expected, check_aliases: check_aliases)
+        if actual and expected then
+          return false unless equal_middle_name?(actual, expected)
+          return false unless equal_last_name?(actual, expected, check_pre_married_name: check_pre_married_name)
+          return false unless equal_first_name?(actual, expected, check_aliases: check_aliases)
 
-        true
+          return true
+        end
+
+        false
       end
     end
   end

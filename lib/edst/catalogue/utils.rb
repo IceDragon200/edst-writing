@@ -101,8 +101,8 @@ module EDST
       #   # means that the current character, is the Son of ThatGuy
       def self.parse_character_relation(str)
         if str =~ /(.+)\s+of\s+(.+)/
-          rel = $1
-          person = $2
+          rel = $1.strip
+          person = $2.strip
           return rel, person
         end
         return nil, nil

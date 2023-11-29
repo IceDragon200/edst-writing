@@ -23,10 +23,27 @@ module EDST
       end
 
       private def raw_relations
-        if r = @document.search('div.relation list').first
-          return r.children.map(&:value)
+        result = []
+
+        [
+          @document.search('div.relation list'),
+          @document.search('div.relations list')
+        ].each do |lists|
+          lists.each do |list|
+            list.children.each do |element|
+              case element.kind
+              when :comment
+                :ok
+              when :ln
+                result.push(element.value)
+              else
+                raise "unexpected element #{element.kind}"
+              end
+            end
+          end
         end
-        []
+
+        result
       end
 
       # @return [Array<CharacterRelation>]

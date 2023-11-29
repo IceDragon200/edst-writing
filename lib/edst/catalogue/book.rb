@@ -70,7 +70,14 @@ module EDST
         end
         if character
           id = character.full_id
-          tree = @relation_map[id] ||= RelationLeaf.new(character)
+          tree = @relation_map[id]
+          if tree
+            unless tree.character == character
+              raise "character mismatch"
+            end
+          else
+            tree = @relation_map[id] = RelationLeaf.new(character)
+          end
           return tree
         end
         nil
@@ -80,20 +87,17 @@ module EDST
         @relation_tree ||= begin
           @relation_map = {}
           root = RelationLeaf.new nil
-          characters.each do |character|
-            leaf = find_relation_leaf(character)
-            root.children << leaf
-            character.relations.each do |relation|
-              char = find_relation_leaf(relation.target_name)
-              next unless char
-              # relation here is from the current character, if the relation says "child of X" then the relation will report that it is_child
+          characters.each do |parent|
+            leaf = find_relation_leaf(parent)
+            root.children.push(leaf)
+            parent.relations.each do |prel|
+              next unless prel.target_name
+              child = find_relation_leaf(prel.target_name)
+              next unless child
+              # prel here is from the parent character, if the relation says "child of X" then the relation will report that it is_child
               # the leaf is also the current character, if the relation says "is parent of", then it will add the related character to this node's children
-              groups = relation.inverted_branches_to_collections.map do |sym|
-                leaf.public_send(sym)
-              end
-
-              groups.each do |target|
-                target << char
+              prel.inverted_branches_to_collections.each do |sym|
+                leaf.add_to_group(sym, child)
               end
             end
           end
@@ -139,7 +143,8 @@ module EDST
         if book_node
           book = Catalogue::Book.new(
             #filename: filename,
-            document: book_node).tap(&:relation_tree)
+            document: book_node
+          ).tap(&:relation_tree)
           book.load_everything unless lazy_load
           book
         else

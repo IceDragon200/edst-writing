@@ -19,6 +19,8 @@ module EDST
         grand_chibling: :grand_pibling,
         grand_child: :grand_parent,
         grand_parent: :grand_child,
+        great_grand_parent: :great_grand_child,
+        great_grand_child: :great_grand_parent,
         parent: :child,
         sibling: :sibling,
         spouse: :spouse,
@@ -42,6 +44,8 @@ module EDST
         grand_chibling: :grand_chiblings,
         grand_child: :grand_children,
         grand_parent: :grand_parents,
+        great_grand_child: :great_grand_children,
+        great_grand_parent: :great_grand_parents,
         parent: :parents,
         sibling: :siblings,
         spouse: :spouses,
@@ -62,12 +66,20 @@ module EDST
         "foster-mother" => [:adopted_parent, :parent],
         "foster-daughter" => [:adopted_child, :child],
         "foster-son" => [:adopted_child, :child],
+        "foster-sister" => [:adopted_sibling, :sibling],
+        "foster-brother" => [:adopted_sibling, :sibling],
         "grandfather" => [:grand_parent],
         "grandmother" => [:grand_parent],
         "grandaunt" => [:grand_pibling],
         "granduncle" => [:grand_pibling],
+        "grandniece" => [:grand_chibling],
+        "grandnephew" => [:grand_chibling],
         "grandson" => [:grand_child],
         "granddaughter" => [:grand_child],
+        "great-grandfather" => [:great_grand_parent],
+        "great-grandmother" => [:great_grand_parent],
+        "great-grandson" => [:great_grand_child],
+        "great-granddaughter" => [:great_grand_child],
         "wife" => [:spouse],
         "husband" => [:spouse],
         "twin-sister" => [:twin_sibling, :biological_sibling, :sibling],
@@ -84,7 +96,8 @@ module EDST
         "son" => [:biological_child, :child],
         "daughter" => [:biological_child, :child],
         "friend" => [:friend],
-        "childhood friend" => [:friend]
+        "childhood friend" => [:friend],
+        "best friend" => [:friend],
       }.freeze
 
       # Returns a rough guestimation of the target's gender with the given word.
@@ -110,14 +123,15 @@ module EDST
 
       # Ensures that
       def self.test_gender(char, relation)
-        case expected = gender_of_relation(relation)
+        expected = gender_of_relation(relation)
+        case expected
         when 'female', 'male'
           unless char.gender == expected
             char.log.err "`relation` mismatch gender, expected to be `#{expected}`, but character is a `#{char.gender}`."
             return false
           end
         when 'unknown'
-          char.log.err "`relation` unhandled relation type `#{word}`."
+          char.log.err "`relation` unhandled relation type `#{expected}`."
           false
         end
         true
@@ -128,7 +142,7 @@ module EDST
         if BRANCHES_BY_RELATION.has_key?(key)
           BRANCHES_BY_RELATION[key]
         else
-          warn "unhandled relation `#{relation}`."
+          raise "unhandled relation `#{relation}`."
           []
         end
       end
@@ -138,29 +152,43 @@ module EDST
         when 'ex-wife', 'ex-husband'
           [other_is_male ? 'ex-husband' : 'ex-wife', nil]
 
-        when /(half|step|twin)-(sister|brother)/
-          prefix = $1
+        when "half-brother", "step-brother", "twin-brother",
+             "half-sister", "step-sister", "twin-sister"
+
+          prefix, _ = *relation.split("-")
           [other_is_male ? "#{prefix}-brother" : "#{prefix}-sister", nil]
 
-        when /foster-(father|mother)/
+        when "foster-father", "foster-mother"
           [other_is_male ? 'foster-son' : 'foster-daughter', nil]
 
-        when /foster-(daughter|son)/
+        when "foster-daughter", "foster-son"
           [other_is_male ? 'foster-father' : 'foster-mother', nil]
 
-        when /step-(father|mother)/
+        when "foster-sister", "foster-brother"
+          [other_is_male ? 'foster-brother' : 'foster-sister', nil]
+
+        when "step-father", "step-mother"
           [other_is_male ? 'step-son' : 'step-daughter', nil]
 
-        when /step-(daughter|son)/
+        when "step-daughter", "step-son"
           [other_is_male ? 'step-father' : 'step-mother', nil]
 
-        when /grand(father|mother)/
+        when "great-grandfather", "great-grandmother"
+          [other_is_male ? 'great-grandson' : 'great-granddaughter', nil]
+
+        when "great-granddaughter", "great-grandson"
+          [other_is_male ? 'great-grandfather' : 'great-grandmother', nil]
+
+        when "grandfather", "grandmother"
           [other_is_male ? 'grandson' : 'granddaughter', nil]
 
-        when /grand(aunt|uncle)/
-          [other_is_male ? 'grandnewphew' : 'grandniece', nil]
+        when 'grandniece', 'grandnephew'
+          [other_is_male ? 'granduncle' : 'grandaunt', nil]
 
-        when /grand(daughter|son)/
+        when "grandaunt", "granduncle"
+          [other_is_male ? 'grandnephew' : 'grandniece', nil]
+
+        when "granddaughter", "grandson"
           [other_is_male ? 'grandfather' : 'grandmother', nil]
 
         when 'wife', 'husband'
@@ -193,10 +221,10 @@ module EDST
       attr_reader :relation
       attr_reader :target_name
 
-      def initialize(**options)
-        @character = options.fetch(:character)
-        @relation = options.fetch(:relation)
-        @target_name = options.fetch(:target_name)
+      def initialize(character:, relation:, target_name:)
+        @character = character
+        @relation = relation
+        @target_name = target_name
       end
 
       def determine_branches
